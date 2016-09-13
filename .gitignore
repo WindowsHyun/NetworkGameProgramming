@@ -5,3 +5,11 @@
 /NetworkGameProgramming/x64/Debug
 /NetworkGameProgramming.VC.db
 /NetworkGameProgramming.VC.VC.opendb
+/.vs/NetworkGameProgramming/v14
+/20160913수업/TCPClient/Debug
+/20160913수업/TCPClient/TCPClient/Debug/TCPClient.tlog
+/20160913수업/TCPClient/TCPClient/Debug
+/20160913수업/TCPServer/.vs/TCPServer/v14
+/20160913수업/TCPServer/Debug
+/20160913수업/TCPServer/TCPServer/Debug
+*.db
