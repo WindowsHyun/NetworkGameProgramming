@@ -2,7 +2,7 @@
 #pragma comment (lib,"ws2_32")
 #include <WinSock2.h>
 #include <stdio.h>
-#include <Windows.h>
+
 
 void getPortOnOff( char* domain, int sNum, int eNum ) {
 	int retval;
