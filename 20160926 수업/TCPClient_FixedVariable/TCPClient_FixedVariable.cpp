@@ -10,7 +10,7 @@ using namespace std;
 
 #define SERVERIP   "127.0.0.1"
 #define SERVERPORT 9000
-#define BUFSIZE    100
+#define BUFSIZE    3000
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(char *msg)

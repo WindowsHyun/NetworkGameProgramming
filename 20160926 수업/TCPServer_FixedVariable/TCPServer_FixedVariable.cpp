@@ -1,6 +1,7 @@
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>
 #include <stdlib.h>
+#include <atlstr.h> // cstring
 #include <stdio.h>
 
 #define SERVERPORT 9000
@@ -125,6 +126,10 @@ int main( int argc, char *argv[] )
 			buf[retval] = '\0';
 			sprintf( filename, "%s", buf );
 			printf( "파일 이름 : %s [%d byte]\n", filename, len );
+			CString str = filename;
+			CString fileexe = str.Right(str.GetLength() - str.ReverseFind('\\') - 1);
+			printf("파일 명 : %s\n", fileexe);
+
 			//delete[] buf;
 			//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 			// 실제 파일 데이터를 받기
@@ -150,7 +155,7 @@ int main( int argc, char *argv[] )
 			// 받은 데이터 출력
 			buffer[retval] = '\0';
 			FILE *fp;
-			fp = fopen( filename, "wb" );
+			fp = fopen(fileexe, "wb" );
 			fwrite( buffer, 1, len, fp );
 			fclose( fp );
 			printf( "데이터 길이 : %d byte\n", len );
