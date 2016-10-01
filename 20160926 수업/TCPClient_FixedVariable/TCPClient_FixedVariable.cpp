@@ -1,16 +1,14 @@
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>
 #include <stdlib.h>
+#include <Windows.h>
 #include <stdio.h>
 
-#include <iostream>
-#include <fstream>
 
-using namespace std;
 
 #define SERVERIP   "127.0.0.1"
 #define SERVERPORT 9000
-#define BUFSIZE    3000
+#define DataBufSize    1024
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(char *msg)
@@ -66,8 +64,10 @@ int main(int argc, char *argv[])
 	FILE *fp;
 	char fileName[MAX_PATH]; // 파일의 이름
 	int fileSize;
-	while ( 1 ) {
+	int sendSize;
+	float startTime, endTime;
 
+	while ( 1 ) {
 		while ( true ) {
 			printf( "파일 이름을 입력하세요\n->" );
 			scanf( "%s", &fileName );
@@ -103,25 +103,55 @@ int main(int argc, char *argv[])
 			err_display( "send()" );
 			exit( 1 );
 		}
-		printf( "send filename size : %d byte\n", retval );
+		//printf( "send filename size : %d byte\n", retval );
 
 		//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		char *buf = new char[fileSize];
-
-		fread( buf, 1, fileSize, fp );
+		char buf[DataBufSize];
+		int bufSize = DataBufSize;
+		int nowsendSize = 0;
+		float nowPer;
+		int percentage = 10;
+		bool sendData = true;
+		sendSize = fileSize;
 
 		retval = send( sock, (char *)&fileSize, sizeof( int ), 0 );
 		if ( retval == SOCKET_ERROR ) {
 			err_display( "send()" );
 			exit( 1 );
 		}
-		// 데이터 보내기(가변 길이)
-		retval = send( sock, buf, fileSize, 0 );
-		if ( retval == SOCKET_ERROR ) {
-			err_display( "send()" );
-			exit( 1 );
+		printf( "진행도 ( 10%% 당 1개씩 ) : [ " );
+		
+		startTime = GetTickCount();
+		while ( sendData ) {
+			//파일 읽어서 버퍼에 저장
+			if ( sendSize <= DataBufSize ) {
+				bufSize = DataBufSize - sendSize;
+				sendData = false;
+			}
+			else {
+				bufSize = DataBufSize;
+			}
+
+			fread( buf, 1, bufSize, fp );
+
+			//전송
+			retval = send( sock, buf, bufSize, 0 );
+			if ( retval == SOCKET_ERROR ) {
+				err_display( "send()" );
+				exit( 1 );
+			}
+			sendSize -= bufSize;
+			nowsendSize += bufSize;
+			nowPer = (float)nowsendSize / (float)fileSize * 100;
+
+			if ( nowPer >= percentage ) {
+				percentage += 10;
+				printf( "★" );
+			}
 		}
-		printf( "send file size : %d byte\n\n", retval );
+		endTime = GetTickCount();
+		printf( " ]\n" );
+		printf( "총 소요시간 : %f초\n", (endTime-startTime)/1024 );
 		//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	}
 

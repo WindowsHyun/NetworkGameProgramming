@@ -2,10 +2,12 @@
 #include <winsock2.h>
 #include <stdlib.h>
 #include <atlstr.h> // cstring
+#include <Windows.h>
 #include <stdio.h>
 
 #define SERVERPORT 9000
 #define BUFSIZE    3000
+#define DataBufSize    1024
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit( char *msg )
@@ -85,6 +87,12 @@ int main( int argc, char *argv[] )
 	SOCKADDR_IN clientaddr;
 	int addrlen;
 	int len;
+	int reciveSize; //버퍼 사이즈로 보내기 위해서 현재 얼만큼 보내졌는지 확인을 위해서
+	int nowreciveSize;
+	int percentage;
+	int fileSize;
+	float nowPer;
+	float startTime, endTime;
 	char filename[BUFSIZE];
 
 	while ( 1 ) {
@@ -125,16 +133,16 @@ int main( int argc, char *argv[] )
 			// 받은 데이터 출력
 			buf[retval] = '\0';
 			sprintf( filename, "%s", buf );
+			printf( "-----------------------------------------------\n" );
 			printf( "파일 이름 : %s [%d byte]\n", filename, len );
 			CString str = filename;
-			CString fileexe = str.Right(str.GetLength() - str.ReverseFind('\\') - 1);
-			printf("파일 명 : %s\n", fileexe);
+			CString fileexe = str.Right( str.GetLength() - str.ReverseFind( '\\' ) - 1 );
+			printf( "파일 명 : %s", fileexe );
 
-			//delete[] buf;
 			//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 			// 실제 파일 데이터를 받기
 
-			retval = recvn( client_sock, (char *)&len, sizeof( int ), 0 );
+			retval = recvn( client_sock, (char *)&reciveSize, sizeof( int ), 0 );
 			if ( retval == SOCKET_ERROR ) {
 				err_display( "recv()" );
 				break;
@@ -142,24 +150,54 @@ int main( int argc, char *argv[] )
 			else if ( retval == 0 )
 				break;
 
-			char *buffer = new char[len]; // 전송된 길이를 알고 있으니 크기에 맞춰서 buffer를 늘려주자!
+			printf( " [%d byte]\n", reciveSize );
+			printf( "진행도 ( 10%% 당 1개씩 ) : [ " );
+			fileSize = reciveSize;
+			percentage = 10;
+			nowreciveSize = 0;
 
-			retval = recvn( client_sock, buffer, len, 0 );
-			if ( retval == SOCKET_ERROR ) {
-				err_display( "recv()" );
-				break;
-			}
-			else if ( retval == 0 )
-				break;
+			char buffer[DataBufSize]; // 전송된 길이를 알고 있으니 크기에 맞춰서 buffer를 늘려주자!
+			int bufSize = DataBufSize;
+			bool sendData = true;
 
-			// 받은 데이터 출력
-			buffer[retval] = '\0';
 			FILE *fp;
-			fp = fopen(fileexe, "wb" );
-			fwrite( buffer, 1, len, fp );
-			fclose( fp );
-			printf( "데이터 길이 : %d byte\n", len );
+			fp = fopen( fileexe, "wb" );
+			startTime = GetTickCount();
+			while ( sendData ) {
+				if ( reciveSize <= DataBufSize ) {
+					bufSize = DataBufSize - reciveSize;
+					sendData = false;
+				}
+				else {
+					bufSize = DataBufSize;
+				}
 
+
+				retval = recvn( client_sock, buffer, bufSize, 0 );
+				if ( retval == SOCKET_ERROR ) {
+					err_display( "recv()" );
+					break;
+				}
+				else if ( retval == 0 )
+					break;
+
+
+				fwrite( buffer, 1, bufSize, fp );
+				reciveSize -= bufSize;
+				nowreciveSize += bufSize;
+				nowPer = (float)nowreciveSize / (float)fileSize * 100;
+
+				if ( nowPer >= percentage ) {
+					percentage += 10;
+					printf( "★" );
+				}
+
+			}
+			endTime = GetTickCount();
+			printf( " ]\n" );
+			printf( "총 소요시간 : %f초\n->Download the complete file!\n", (endTime - startTime) / 1024 );
+			printf( "-----------------------------------------------\n" );
+			fclose( fp );
 
 		}
 		closesocket( client_sock );
