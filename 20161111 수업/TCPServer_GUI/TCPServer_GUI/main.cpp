@@ -27,7 +27,7 @@ SOCKET sock; // 소켓
 char contentBuf[BUFSIZE + 1]; //sprintf 등을 사용할때 쓰자
 HANDLE hReadEvent, hWriteEvent; // 이벤트
 HWND hSendButton; // 보내기 버튼
-HWND hList, hButton; // 편집 컨트롤
+HWND hList, hRList, hButton; // 편집 컨트롤
 
 DWORD WINAPI ProcessClient( LPVOID arg ); // 클라 접속을 위한 스레드
 DWORD WINAPI Thread_Server( LPVOID arg ); // 접속후 파일 전송을 받기위한 스레드
@@ -63,6 +63,7 @@ BOOL CALLBACK DlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam ) {
 	case WM_INITDIALOG:
 		//hProgress = GetDlgItem( hDlg, IDC_PROGRESS1 );
 		hList = GetDlgItem( hDlg, IDC_LIST1 );
+		hRList = GetDlgItem( hDlg, IDC_LIST2 );
 		hButton = GetDlgItem( hDlg, IDC_BUTTON1 );
 		//SendMessage( hProgress, PBM_SETPOS, 0, 0 );
 		//SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)"추가한다." );
@@ -86,6 +87,7 @@ BOOL CALLBACK DlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam ) {
 
 		case IDC_BUTTON1:
 			SendMessage( hList, LB_RESETCONTENT, 0, 0 ); //리스트 내용을 초기화 해준다.
+			SendMessage( hRList, LB_RESETCONTENT, 0, 0 ); //리스트 내용을 초기화 해준다.
 			return TRUE;
 
 		case IDCANCEL:
@@ -140,7 +142,7 @@ DWORD WINAPI ProcessClient( LPVOID arg ) {
 		}
 
 		// 접속한 클라이언트 정보 출력
-		sprintf( contentBuf, "[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d", inet_ntoa( clientaddr.sin_addr ), ntohs( clientaddr.sin_port ) );
+		sprintf( contentBuf, "클라이언트 접속: IP 주소=%s, 포트 번호=%d", inet_ntoa( clientaddr.sin_addr ), ntohs( clientaddr.sin_port ) );
 		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 
 		// 스레드 생성
@@ -283,20 +285,20 @@ DWORD WINAPI Thread_Server( LPVOID arg ) {
 		}
 		endTime = GetTickCount();
 
-		sprintf( contentBuf, "-----------------------------------------------" );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		//sprintf( contentBuf, "-----------------------------------------------" );
+		//SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 		sprintf( contentBuf, "Client IP : %s, Port : %d", inet_ntoa( clientaddr.sin_addr ), ntohs( clientaddr.sin_port ) );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
-		sprintf( contentBuf, "파일 명 : %s [%d byte]", fileexe, reciveSize );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		sprintf( contentBuf, "파일 명 : %s", fileexe );
+		SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 		sprintf( contentBuf, "퍼센테이지 : 100%%" );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 		sprintf( contentBuf, "총 소요시간 : %f초", (endTime - startTime) / 1024 );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
-		sprintf( contentBuf, "Download the complete file!", (endTime - startTime) / 1024 );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		//sprintf( contentBuf, "Download the complete file!", (endTime - startTime) / 1024 );
+		//SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 		sprintf( contentBuf, "-----------------------------------------------" );
-		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
+		SendMessage( hRList, LB_ADDSTRING, 0, (LPARAM)contentBuf );
 		fclose( fp );
 
 	}
