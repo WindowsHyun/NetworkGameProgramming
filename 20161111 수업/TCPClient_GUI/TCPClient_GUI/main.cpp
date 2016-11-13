@@ -28,7 +28,6 @@ SOCKET sock; // 소켓
 char contentBuf[MAX_PATH]; //sprintf 등을 사용할때 쓰자
 TCHAR file_locale[MAX_PATH];
 char fileName[MAX_PATH]; // 파일의 이름
-HANDLE hReadEvent, hWriteEvent; // 이벤트
 HWND ShareHwnd;
 HWND hProgress, hSerarchButton, hSendButton, hTextBox, hTextBox2; // 편집 컨트롤
 
@@ -36,21 +35,11 @@ DWORD WINAPI ProcessClient( LPVOID arg );
 DWORD WINAPI SendFile( LPVOID arg );
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
-	// 이벤트 생성
-	hReadEvent = CreateEvent( NULL, FALSE, TRUE, NULL );
-	if ( hReadEvent == NULL ) return 1;
-	hWriteEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
-	if ( hWriteEvent == NULL ) return 1;
-
 	// 소켓 통신 스레드 생성
 	CreateThread( NULL, 0, ProcessClient, NULL, 0, NULL );
 
 	// 대화상자 생성
 	DialogBox( hInstance, MAKEINTRESOURCE( IDD_DIALOG1 ), NULL, DlgProc );
-
-	// 이벤트 제거
-	CloseHandle( hReadEvent );
-	CloseHandle( hWriteEvent );
 
 	// closesocket()
 	closesocket( sock );

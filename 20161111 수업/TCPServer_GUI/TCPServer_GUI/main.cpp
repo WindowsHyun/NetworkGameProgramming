@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <atlstr.h> /* cstring 사용을 위해서 사용하는 h 파일 */
-//#include <CommCtrl.h> /* PBM_SETPOS 프로그래스바 사용을 위해서 사용하는 h 파일 클라에서 사용할꺼니깐 지우지 말자 */
+#include <CommCtrl.h> /* PBM_SETPOS 프로그래스바 사용을 위해서 사용하는 h 파일 클라에서 사용할꺼니깐 지우지 말자 */
 #include "resource.h"
 
 #define SERVERPORT 9000
@@ -25,30 +25,19 @@ void err_display( char *msg );
 
 SOCKET sock; // 소켓
 char contentBuf[BUFSIZE + 1]; //sprintf 등을 사용할때 쓰자
-HANDLE hReadEvent, hWriteEvent; // 이벤트
 HWND hSendButton; // 보내기 버튼
-HWND hList, hRList, hButton; // 편집 컨트롤
+HWND hList, hRList, hButton, hProgress; // 편집 컨트롤
 
 DWORD WINAPI ProcessClient( LPVOID arg ); // 클라 접속을 위한 스레드
 DWORD WINAPI Thread_Server( LPVOID arg ); // 접속후 파일 전송을 받기위한 스레드
 int recvn( SOCKET s, char *buf, int len, int flags );
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
-	// 이벤트 생성
-	hReadEvent = CreateEvent( NULL, FALSE, TRUE, NULL );
-	if ( hReadEvent == NULL ) return 1;
-	hWriteEvent = CreateEvent( NULL, FALSE, FALSE, NULL );
-	if ( hWriteEvent == NULL ) return 1;
-
 	// 소켓 통신 스레드 생성
 	CreateThread( NULL, 0, ProcessClient, NULL, 0, NULL );
 
 	// 대화상자 생성
 	DialogBox( hInstance, MAKEINTRESOURCE( IDD_DIALOG1 ), NULL, DlgProc );
-
-	// 이벤트 제거
-	CloseHandle( hReadEvent );
-	CloseHandle( hWriteEvent );
 
 	// closesocket()
 	closesocket( sock );
@@ -65,6 +54,7 @@ BOOL CALLBACK DlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam ) {
 		hList = GetDlgItem( hDlg, IDC_LIST1 );
 		hRList = GetDlgItem( hDlg, IDC_LIST2 );
 		hButton = GetDlgItem( hDlg, IDC_BUTTON1 );
+		hProgress = GetDlgItem(hDlg,IDC_PROGRESS1);
 		//SendMessage( hProgress, PBM_SETPOS, 0, 0 );
 		//SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)"추가한다." );
 		SendMessage( hList, LB_ADDSTRING, 0, (LPARAM)"Server is Ready..!" );
@@ -267,6 +257,7 @@ DWORD WINAPI Thread_Server( LPVOID arg ) {
 			reciveSize -= bufSize;
 			nowreciveSize += bufSize;
 			nowPer = (float)nowreciveSize / (float)fileSize * 100;
+			//SendMessage( hProgress, PBM_SETPOS, nowPer, 0 );
 
 			if ( nowPer >= percentage ) {
 				percentage += 10;
